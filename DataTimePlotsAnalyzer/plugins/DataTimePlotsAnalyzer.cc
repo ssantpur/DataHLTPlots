@@ -77,7 +77,6 @@ private:
     edm::EDGetTokenT<edm::ValueMap<float>> jetTimesInputToken;
     edm::EDGetTokenT<edm::ValueMap<unsigned int>> jetCellsInputToken;
     edm::EDGetTokenT<edm::ValueMap<float>> jetEmInputToken;
-    edm::EDGetTokenT<reco::MuonRecHitClusterCollection> clusterToken;
     bool triggerFired;
     TH1D * triggerFiredHist;
     TH1D * timeHist;
@@ -99,11 +98,6 @@ private:
     unsigned int store_i = 0;
     unsigned int orbit_i = 0;
     edm::EDGetTokenT<edm::TriggerResults> triggerResultsToken;
-    std::vector<int> * 	v_dtClusterSize= new std::vector<int>();
-    std::vector<double> * 	v_dtClusterMB1 = new std::vector<double>();
-    std::vector<double> * 	v_dtClusterMB2 = new std::vector<double>();
-    std::vector<double> * 	v_dtClusterEta = new std::vector<double>();
-    std::vector<double> * 	v_dtClusterPhi = new std::vector<double>();
     std::vector<double> * 	v_caloJetHLTPt= new std::vector<double>();
     std::vector<double> * 	v_caloJetHLTEta= new std::vector<double>();
     std::vector<double> *   v_caloJetHLTPhi= new std::vector<double>();
@@ -137,7 +131,6 @@ DataTimePlotsAnalyzer::DataTimePlotsAnalyzer(const edm::ParameterSet& iConfig)
     jetTimesInputToken = consumes<edm::ValueMap<float>>(jetTimeLabel_);
     jetCellsInputToken = consumes<edm::ValueMap<unsigned int>>(jetCellsLabel_);
     jetEmInputToken = consumes<edm::ValueMap<float>>(jetEmLabel_);
-    clusterToken = consumes<reco::MuonRecHitClusterCollection>(iConfig.getParameter<edm::InputTag>("ClusterTag"));
     triggerFired = fs->make<TH1D>("triggerFired","",2,0,2);
     timeHist = fs->make<TH1D>("jetTimeHist","",200,-25,25);
     timeHistHighHad = fs->make<TH1D>("jetTimeHistHighHad","",200,-25,25);
@@ -149,19 +142,47 @@ DataTimePlotsAnalyzer::DataTimePlotsAnalyzer(const edm::ParameterSet& iConfig)
     timeVsJetEtaHist = fs->make<TH2D>("jetTimeVsEtaHist","",200,-25,25,60,-1.5,1.5);
     timeVsJetCellsHist = fs->make<TH2D>("jetTimeVsnCellsHist","",200,-25,25,100,0,100);
     timeVsJetEmHist = fs->make<TH2D>("jetTimeVsEmHist","",200,-25,25,200,0,200);
-    triggerResultsToken = consumes<edm::TriggerResults>(edm::InputTag("TriggerResults","","HLTX"));
+    triggerResultsToken = consumes<edm::TriggerResults>(edm::InputTag("TriggerResults","","MYHLT"));
     std::vector<std::string> delayedJetStrings = {"HLT_HT425",
-      "HLT_HT430_DelayedJet40_DoubleDelay0p5nsTrackless",
-      "HLT_HT430_DelayedJet40_DoubleDelay1nsInclusive",
-      "HLT_HT430_DelayedJet40_DoubleDelay0nsInclusive",
-      "HLT_HT430_DelayedJet40_SingleDelay1nsTrackless",
-      "HLT_HT430_DelayedJet40_SingleDelay2nsInclusive",
-      "HLT_HT430_DelayedJet40_SingleDelay1nsInclusive",
-      "HLT_L1MET_DTCluster50",
-      "HLT_L1MET_DTClusterNoMB1S50",
-      "HLT_CaloMET60_DTCluster50",
-      "HLT_CaloMET60_DTClusterNoMB1S50",
-      "HLT_PFMET100_PFMHT100_IDTight_PFHT60","HLT_PFMETNoMu100_PFMHTNoMu100_IDTight_PFHT60","HLT_CaloMET90_NotCleaned"
+						  "HLT_HT430_DelayedJet40_DoubleDelay0p5nsInclusive",
+						  "HLT_HT430_DelayedJet40_DoubleDelay0p5nsTrackless",
+						  "HLT_HT430_DelayedJet40_DoubleDelay0p75nsTrackless",
+						  "HLT_HT430_DelayedJet40_DoubleDelay1nsInclusive",
+						  "HLT_HT430_DelayedJet40_DoubleDelay1nsTrackless",
+						  "HLT_HT430_DelayedJet40_DoubleDelay1p25nsInclusive",
+						  "HLT_HT430_DelayedJet40_DoubleDelay1p5nsInclusive",
+						  "HLT_HT430_DelayedJet40_SingleDelay0p5nsInclusive",
+						  "HLT_HT430_DelayedJet40_SingleDelay0p5nsTrackless",
+						  "HLT_HT430_DelayedJet40_SingleDelay1nsInclusive",
+						  "HLT_HT430_DelayedJet40_SingleDelay1nsTrackless",
+						  "HLT_HT430_DelayedJet40_SingleDelay1p25nsTrackless",
+						  "HLT_HT430_DelayedJet40_SingleDelay1p5nsInclusive",
+						  "HLT_HT430_DelayedJet40_SingleDelay1p5nsTrackless",
+						  "HLT_HT430_DelayedJet40_SingleDelay2nsInclusive",
+						  "HLT_HT430_DelayedJet40_SingleDelay2p25nsInclusive",
+						  "HLT_HT430_DelayedJet40_SingleDelay2p5nsInclusive",
+						  "HLT_L1Tau_DelayedJet40_DoubleDelay0p5nsTrackless",
+						  "HLT_L1Tau_DelayedJet40_DoubleDelay0p75nsInclusive",
+						  "HLT_L1Tau_DelayedJet40_DoubleDelay1nsTrackless",
+						  "HLT_L1Tau_DelayedJet40_DoubleDelay1p25nsInclusive",
+						  "HLT_L1Tau_DelayedJet40_DoubleDelay1p25nsTrackless",
+						  "HLT_L1Tau_DelayedJet40_DoubleDelay1p5nsInclusive",
+						  "HLT_L1Tau_DelayedJet40_DoubleDelay1p5nsTrackless",
+						  "HLT_L1Tau_DelayedJet40_DoubleDelay1p75nsInclusive",
+						  "HLT_L1Tau_DelayedJet40_SingleDelay2p5nsTrackless",
+						  "HLT_L1Tau_DelayedJet40_SingleDelay2p75nsTrackless",
+						  "HLT_L1Tau_DelayedJet40_SingleDelay3nsTrackless",
+						  "HLT_L1Tau_DelayedJet40_SingleDelay3p5nsInclusive",
+						  "HLT_L1Tau_DelayedJet40_SingleDelay3p75nsInclusive",
+						  "HLT_L1Tau_DelayedJet40_SingleDelay4nsInclusive",
+						  "HLT_L1Tau_DelayedJet40_SingleDelayPos2p5nsInclusive_SatBunch",
+						  "HLT_HT430_DelayedJet40_SingleDelayNeg2p5nsInclusive_SatBunch",
+						  "HLT_HT430_DelayedJet40_SingleDelayPos0p75nsInclusive_BeamHalo",
+						  "HLT_HT430_DelayedJet40_SingleDelayNeg0p75nsInclusive_BeamHalo",
+						  "HLT_L1Tau_DelayedJet40_SingleDelayNeg2p5nsInclusive_SatBunch",
+						  "HLT_L1Tau_DelayedJet40_SingleDelayNeg0p75nsInclusive_BeamHalo",
+						  "HLT_L1Tau_DelayedJet40_SingleDelayPos0p75nsInclusive_BeamHalo",
+						  "HLT_PFMET100_PFMHT100_IDTight_PFHT60","HLT_PFMETNoMu100_PFMHTNoMu100_IDTight_PFHT60","HLT_CaloMET90_NotCleaned"
     };
     for (auto delayedJetHLTIt = delayedJetStrings.begin(); delayedJetHLTIt != delayedJetStrings.end(); delayedJetHLTIt++){
         delayedJetHLT[*delayedJetHLTIt] = false;
@@ -175,11 +196,6 @@ DataTimePlotsAnalyzer::DataTimePlotsAnalyzer(const edm::ParameterSet& iConfig)
     timeTree->Branch("caloJetHLT_ecalE",               &v_caloJetHLTEcalE);
     timeTree->Branch("caloJetHLT_ecalCells",               &v_caloJetHLTEcalCells);
     timeTree->Branch("caloJetHLT_ecalTime",               &v_caloJetHLTEcalTime);
-    timeTree->Branch("dtClusterSize",&v_dtClusterSize);
-    timeTree->Branch("dtClusterMB1",&v_dtClusterMB1);
-    timeTree->Branch("dtClusterMB2",&v_dtClusterMB2);
-    timeTree->Branch("dtClusterEta",&v_dtClusterEta);
-    timeTree->Branch("dtClusterPhi",&v_dtClusterPhi);
     timeTree->Branch("event",&event_i,"event/i");
     timeTree->Branch("lumi",&lumi_i,"lumi/i");
     timeTree->Branch("era",&era_i,"era/i");
@@ -214,11 +230,6 @@ void DataTimePlotsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSe
     v_caloJetHLTEcalTime->clear();
     v_caloJetHLTEcalCells->clear();
     v_caloJetHLTEcalE->clear();
-    v_dtClusterSize->clear();
-    v_dtClusterMB1->clear();
-    v_dtClusterMB2->clear();
-    v_dtClusterEta->clear();
-    v_dtClusterPhi->clear();
     for (auto iDelayedJetHLT = delayedJetHLT.begin(); iDelayedJetHLT != delayedJetHLT.end(); iDelayedJetHLT++){
         iDelayedJetHLT->second = false;
     }
@@ -248,7 +259,6 @@ void DataTimePlotsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSe
     auto const& jetTimes = iEvent.get(jetTimesInputToken);
     auto const& jetCells = iEvent.get(jetCellsInputToken);
     auto const& jetEm = iEvent.get(jetEmInputToken);
-    auto const& rechitClusters = iEvent.get(clusterToken);
     // edm::Handle<edm::ValueMap<int>> jetCells;
     // iEvent.getByToken(jetCellsInputToken, jetCells);
     // edm::Handle<edm::ValueMap<float>> jetEm;
@@ -271,13 +281,6 @@ void DataTimePlotsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSe
                 if (trigname.find(iDelayedJetHLT->first + "_v") != std::string::npos)   iDelayedJetHLT->second   = triggerResults->accept(i);
 	    }
 	}
-    }
-    for (auto const& cluster : rechitClusters) {
-	v_dtClusterSize->push_back(cluster.size());
-	v_dtClusterMB1->push_back(cluster.nMB1());
-	v_dtClusterMB2->push_back(cluster.nMB2());
-	v_dtClusterEta->push_back(cluster.eta());
-	v_dtClusterPhi->push_back(cluster.phi());
     }
     for (auto iterJet = jets->begin(); iterJet != jets->end(); ++iterJet) {
 	edm::Ref<vector<reco::CaloJet>> const caloJetRef(jets, std::distance(jets->begin(), iterJet));

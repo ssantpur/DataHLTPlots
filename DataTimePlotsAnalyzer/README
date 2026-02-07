@@ -1,0 +1,15 @@
+Instructions to plot timing fromt he HLT objects
+
+In your favorite cmsrel src area:
+git clone --recursive git@github.com:ssantpur/DataHLTPlots.git
+scram b -j 8
+cd DataHLTPlots/DataTimePlotsAnalyzer
+
+Update the input file location in ConfFile_cfg_2026.py , currently set to run over a hlt.root file that I produced in the Prod folder of the SteamWorkflow
+
+Command to run:
+cmsRun ConfFile_cfg_2026.py
+
+This will produce hltcalojet four vectors, time, ncells, ecalet etc histograms that are saved in an out.root file. The output file also contains which events passed a particular delayed jet trigger.
+
+Get in touch if you have any questions. Happy triggering!
